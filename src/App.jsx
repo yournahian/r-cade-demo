@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, createContext, useContext } from 'r
 import { 
   Coins, Gamepad2, ShoppingBag, TrendingUp, Zap, X, 
   CheckCircle, Loader2, User, LogOut, Flame, RotateCw, Crown,
-  Swords, Dices, Eye, Shield, Search, Menu, ArrowRight, Wallet
+  Swords, Dices, Eye, Shield, Search, Menu, ArrowRight, Wallet, LogIn
 } from 'lucide-react';
 
 // --- Types & Constants ---
@@ -92,6 +92,22 @@ const GameProvider = ({ children }) => {
     addLog("0x71C...9A23", "connected", "");
   };
 
+  const disconnectWallet = () => {
+    setUser({
+      isConnected: false,
+      address: null,
+      ethBalance: 0,
+      cadeBalance: 0,
+      inventory: [],
+      netWorth: 0,
+      wins: 0,
+      losses: 0,
+      matchesPlayed: 0
+    });
+    setNotification({ msg: "Wallet Disconnected", type: 'process' });
+    setView(VIEW.HOME);
+  };
+
   const swapEthForCade = async (amount) => {
     if (!user.isConnected) {
       setNotification({ msg: "Connect Wallet First", type: 'error' });
@@ -168,6 +184,24 @@ const GameProvider = ({ children }) => {
     addLog(user.address.slice(0,8), "bought", item.name);
   };
 
+  const sellAsset = async (item) => {
+    if (!user.isConnected) return;
+    
+    // Sell for 80% of original price
+    const sellPrice = Math.floor(item.price * 0.8);
+    
+    await simulateTx("Listing & Selling Asset");
+    
+    setUser(prev => ({
+      ...prev,
+      cadeBalance: prev.cadeBalance + sellPrice,
+      inventory: prev.inventory.filter(i => i.name !== item.name)
+    }));
+    
+    setNotification({ msg: `Sold ${item.name} for ${sellPrice} RLO`, type: 'success' });
+    addLog(user.address.slice(0,8), "sold", item.name);
+  };
+
   const processBet = async (amount, type, winChance = 0.5) => {
      if (!user.isConnected || user.cadeBalance < amount) {
       setNotification({ msg: "Transaction Failed", type: 'error' });
@@ -215,8 +249,8 @@ const GameProvider = ({ children }) => {
 
   return (
     <GameContext.Provider value={{ 
-      user, view, setView, connectWallet, swapEthForCade, 
-      launchGame, recordGameResult, buyAsset, processBet,
+      user, view, setView, connectWallet, disconnectWallet, swapEthForCade, 
+      launchGame, recordGameResult, buyAsset, sellAsset, processBet,
       logs, notification, activeGameId 
     }}>
       {children}
@@ -641,7 +675,20 @@ const Ticker = () => {
 // --- RESTORED VIEW COMPONENTS (With New Palette) ---
 
 const Navbar = () => {
-  const { user, connectWallet, view, setView } = useGame();
+  const { user, connectWallet, disconnectWallet, view, setView } = useGame();
+  const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsWalletMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   const NavLink = ({ id, label }) => (
     <button 
@@ -660,18 +707,37 @@ const Navbar = () => {
         </div>
         <div className="hidden md:flex gap-8 ml-8">
           <NavLink id={VIEW.ARENA} label="Games" />
-          <NavLink id={VIEW.BETTING} label="Markets" />
-          <NavLink id={VIEW.MARKET} label="Assets" />
+          <NavLink id={VIEW.BETTING} label="Betting" />
+          <NavLink id={VIEW.MARKET} label="Market" />
           <NavLink id={VIEW.PROFILE} label="Profile" />
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         {user.isConnected ? (
-          <div onClick={() => setView(VIEW.PROFILE)} className="flex items-center gap-3 border border-[#a9ddd3] px-4 py-2 rounded-full cursor-pointer hover:bg-[#a9ddd3]/10 transition-colors">
-            <div className="text-[#e8e3d5] font-mono text-sm">{user.cadeBalance} RLO</div>
-            <div className="w-px h-3 bg-[#e8e3d5]/30"></div>
-            <div className="text-gray-500 font-mono text-xs truncate w-20">{user.address}</div>
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setIsWalletMenuOpen(!isWalletMenuOpen)}
+              className="flex items-center gap-3 border border-[#a9ddd3] px-4 py-2 rounded-full cursor-pointer hover:bg-[#a9ddd3]/10 transition-colors">
+              <div className="text-[#e8e3d5] font-mono text-sm">{user.cadeBalance} RLO</div>
+              <div className="w-px h-3 bg-[#e8e3d5]/30"></div>
+              <div className="text-gray-500 font-mono text-xs truncate w-20">{user.address}</div>
+            </button>
+            
+            {isWalletMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[#0a0a0a] border border-[#e8e3d5]/20 rounded-lg shadow-xl z-50 overflow-hidden">
+                <button 
+                  onClick={() => { setView(VIEW.PROFILE); setIsWalletMenuOpen(false); }}
+                  className="w-full text-left px-4 py-3 text-sm text-[#e8e3d5] hover:bg-[#e8e3d5]/10 flex items-center gap-2">
+                  <User size={14}/> Profile
+                </button>
+                <button 
+                  onClick={() => { disconnectWallet(); setIsWalletMenuOpen(false); }}
+                  className="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-red-900/20 flex items-center gap-2 border-t border-[#e8e3d5]/10">
+                  <LogOut size={14}/> Disconnect
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <button 
@@ -941,7 +1007,7 @@ const BettingHub = () => {
 }
 
 const MarketplaceView = () => {
-    const { buyAsset, user } = useGame();
+    const { buyAsset, sellAsset, user } = useGame();
     return (
         <div className="max-w-6xl mx-auto">
              <h2 className="text-3xl font-black text-[#e8e3d5] mb-8 uppercase tracking-tighter">
@@ -962,16 +1028,24 @@ const MarketplaceView = () => {
                             </div>
                         </div>
                         
-                        <button 
-                            disabled={isOwned}
-                            onClick={() => buyAsset(item)}
-                            className={`w-full py-3 font-bold text-xs mt-auto transition-colors uppercase tracking-widest border ${
-                            isOwned 
-                                ? 'border-green-900 text-green-500 cursor-default' 
-                                : 'border-[#e8e3d5] text-[#010101] bg-[#e8e3d5] hover:bg-white'
-                            }`}>
-                            {isOwned ? 'OWNED' : `${item.price} RLO`}
-                        </button>
+                        {isOwned ? (
+                            <div className="mt-auto flex gap-2">
+                                <div className="w-full py-3 font-bold text-xs text-center uppercase tracking-widest border border-green-900 text-green-500 cursor-default bg-green-900/10">
+                                    OWNED
+                                </div>
+                                <button 
+                                    onClick={() => sellAsset(item)}
+                                    className="px-3 py-3 font-bold text-xs uppercase border border-red-900 text-red-500 hover:bg-red-900/20 transition-colors">
+                                    SELL
+                                </button>
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={() => buyAsset(item)}
+                                className="w-full py-3 font-bold text-xs mt-auto transition-colors uppercase tracking-widest border border-[#e8e3d5] text-[#010101] bg-[#e8e3d5] hover:bg-white">
+                                BUY {item.price} RLO
+                            </button>
+                        )}
                         </div>
                     )
                 })}
