@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, createContext, useContext } from 'r
 import { 
   Coins, Gamepad2, ShoppingBag, TrendingUp, Zap, X, 
   CheckCircle, Loader2, User, LogOut, Flame, RotateCw, Crown,
-  Swords, Dices, Eye, Shield, Search, Menu, ArrowRight, Wallet, LogIn
+  Swords, Dices, Eye, Shield, Search, Menu, ArrowRight, Wallet, LogIn, Brain, Activity, Globe, Server, Users, ExternalLink
 } from 'lucide-react';
 
 // --- Types & Constants ---
@@ -22,6 +22,22 @@ const GAMES = [
   { id: 2, name: "Neon Snake", type: "Retro", cost: 5, image: "bg-[url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop')]", description: "Classic Snake with a neon twist. Eat and grow." },
   { id: 3, name: "Block Buster", type: "Arcade", cost: 15, image: "bg-[url('https://images.unsplash.com/photo-1555864326-5cf22ef123cf?q=80&w=2070&auto=format&fit=crop')]", description: "Smash the firewall blocks to earn crypto." },
   { id: 4, name: "Tic-Tac-Toe", type: "Strategy", cost: 5, image: "bg-[url('https://images.unsplash.com/photo-1611996575749-79a3a250f948?q=80&w=2070&auto=format&fit=crop')]", description: "Beat the AI to triple your entry fee." },
+  { id: 5, name: "Cyber Racer", type: "Racing", cost: 20, image: "bg-[url('https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop')]", description: "High speed lane racing. Avoid the red walls." },
+  { id: 6, name: "Bit Miner", type: "Reflex", cost: 8, image: "bg-[url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop')]", description: "Click the green nodes before they vanish." },
+  { id: 7, name: "Crypto Flap", type: "Arcade", cost: 12, image: "bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')]", description: "Tap to fly. Avoid the security pipes." },
+  { id: 8, name: "Hex Sweeper", type: "Strategy", cost: 5, image: "bg-[url('https://images.unsplash.com/photo-1629814249584-bd4d53cf0e7d?q=80&w=2071&auto=format&fit=crop')]", description: "Find the safe nodes. Avoid the bugs." },
+  { id: 9, name: "Void Runner", type: "Arcade", cost: 25, image: "bg-[url('https://images.unsplash.com/photo-1461395253856-b075ca5f0dc2?q=80&w=2070&auto=format&fit=crop')]", description: "Survive the void. Jump to survive." },
+  { id: 10, name: "Neural Link", type: "Puzzle", cost: 15, image: "bg-[url('https://images.unsplash.com/photo-1558494949-ef2a27883bb4?q=80&w=2070&auto=format&fit=crop')]", description: "Connect the memory nodes to win big." }
+];
+
+const FREE_GAMES = [
+  { id: 'f1', name: "Rialo-2048", dev: "Koushik Nir", link: "https://mishunir.github.io/Rialo-2048/", color: "from-blue-600 to-indigo-900" },
+  { id: 'f2', name: "The Devil", dev: "Hasibul Hasan Mahi", link: "https://silver-gingersnap-2820f5.netlify.app/lvl1.html", color: "from-red-600 to-rose-900" },
+  { id: 'f3', name: "Rialo Car Game", dev: "Nayem", link: "https://roaring-babka-e33b03.netlify.app/", color: "from-yellow-600 to-orange-900" },
+  { id: 'f4', name: "Rialo Drop Game", dev: "Muhtasim Muiz", link: "https://muhtasimmuiz.github.io/Rialo-Game-/", color: "from-green-600 to-emerald-900" },
+  { id: 'f5', name: "RELOX", dev: "Hasibul Hasan Mahi", link: "https://reloxrialo.netlify.app/", color: "from-purple-600 to-fuchsia-900" },
+  { id: 'f6', name: "Rialo Catch Game", dev: "Anika Saima", link: "https://muhtasimmuiz.github.io/Rialo-Catch-Game/", color: "from-pink-600 to-rose-900" },
+  { id: 'f7', name: "Whisper Tile", dev: "NR Raihan", link: "https://whisper-tiles-rialo.vercel.app/", color: "from-cyan-600 to-blue-900" },
 ];
 
 const MARKETPLACE = [
@@ -129,7 +145,7 @@ const GameProvider = ({ children }) => {
       return;
     }
     if (user.cadeBalance < cost && cost > 0) {
-      setNotification({ msg: "Insufficient CADE", type: 'error' });
+      setNotification({ msg: "Insufficient CADE Balance", type: 'error' });
       return;
     }
 
@@ -186,11 +202,8 @@ const GameProvider = ({ children }) => {
 
   const sellAsset = async (item) => {
     if (!user.isConnected) return;
-    
-    // Sell for 80% of original price
     const sellPrice = Math.floor(item.price * 0.8);
-    
-    await simulateTx("Listing & Selling Asset");
+    await simulateTx("Processing Sell Order");
     
     setUser(prev => ({
       ...prev,
@@ -283,14 +296,22 @@ const CosmicDodger = ({ onExit }) => {
     const handleKeyDown = (e) => keys[e.key] = true;
     const handleKeyUp = (e) => keys[e.key] = false;
     
+    const handleTouchMove = (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touchX = e.touches[0].clientX - rect.left;
+      player.x = touchX - player.width / 2;
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     const gameLoop = () => {
       if (!gameActive) return;
       canvas.width = canvas.clientWidth;
       canvas.height = canvas.clientHeight;
-      ctx.fillStyle = '#010101'; // Deep Black
+      ctx.fillStyle = '#010101'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
       // Grid effect
@@ -305,16 +326,16 @@ const CosmicDodger = ({ onExit }) => {
       if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
       if (keys.ArrowRight && player.x < canvas.width - player.width) player.x += player.speed;
 
-      ctx.fillStyle = '#a9ddd3'; // Mint
+      ctx.fillStyle = '#a9ddd3';
       ctx.shadowBlur = 15;
       ctx.shadowColor = '#a9ddd3';
       ctx.fillRect(player.x, player.y, player.width, player.height);
       ctx.shadowBlur = 0;
 
-      if (frameCount % 40 === 0) obstacles.push({ x: Math.random() * (canvas.width - 30), y: -30, width: 30, height: 30, speed: 3 + (currentScore/100) });
+      if (frameCount % 40 === 0) obstacles.push({ x: Math.random() * (canvas.width - 30), y: -30, width: 30, height: 30, speed: (3 + (currentScore/100)) });
       if (frameCount % 100 === 0) coins.push({ x: Math.random() * (canvas.width - 20), y: -20, radius: 10, speed: 4 });
 
-      ctx.fillStyle = '#e8e3d5'; // Beige obstacles
+      ctx.fillStyle = '#e8e3d5'; 
       obstacles.forEach((obs, index) => {
         obs.y += obs.speed;
         ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
@@ -325,7 +346,7 @@ const CosmicDodger = ({ onExit }) => {
         if (obs.y > canvas.height) obstacles.splice(index, 1);
       });
 
-      ctx.fillStyle = '#a9ddd3'; // Mint coins
+      ctx.fillStyle = '#a9ddd3';
       coins.forEach((coin, index) => {
         coin.y += coin.speed;
         ctx.beginPath();
@@ -347,6 +368,7 @@ const CosmicDodger = ({ onExit }) => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      canvas.removeEventListener('touchmove', handleTouchMove);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -369,6 +391,8 @@ const SnakeGame = ({ onExit }) => {
   const [score, setScore] = useState(0);
   const [started, setStarted] = useState(false);
   const GRID_SIZE = 20;
+  
+  const touchStart = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleKey = (e) => {
@@ -381,6 +405,29 @@ const SnakeGame = ({ onExit }) => {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [dir, started]);
+
+  const handleTouchStart = (e) => {
+    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!started) setStarted(true);
+    const touchEnd = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    const dx = touchEnd.x - touchStart.current.x;
+    const dy = touchEnd.y - touchStart.current.y;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        if (Math.abs(dx) > 20) { 
+            if (dx > 0 && dir.x === 0) setDir({ x: 1, y: 0 });
+            else if (dx < 0 && dir.x === 0) setDir({ x: -1, y: 0 });
+        }
+    } else {
+        if (Math.abs(dy) > 20) {
+            if (dy > 0 && dir.y === 0) setDir({ x: 0, y: 1 });
+            else if (dy < 0 && dir.y === 0) setDir({ x: 0, y: -1 });
+        }
+    }
+  };
 
   useEffect(() => {
     if (gameOver || !started) return;
@@ -405,10 +452,14 @@ const SnakeGame = ({ onExit }) => {
   }, [dir, food, gameOver, started]);
 
   return (
-    <div className="relative w-full h-full bg-[#010101] rounded border border-[#e8e3d5]/30 flex items-center justify-center">
+    <div 
+        className="relative w-full h-full bg-[#010101] rounded border border-[#e8e3d5]/30 flex items-center justify-center touch-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+    >
       {!started && !gameOver && (
         <div className="absolute z-10 text-[#a9ddd3] text-center animate-pulse font-mono tracking-widest">
-          PRESS ARROW KEYS
+          PRESS KEY OR SWIPE
         </div>
       )}
       <div className="relative bg-[#0a0a0a] border border-[#e8e3d5]/10" style={{ width: 30 * GRID_SIZE, height: 20 * GRID_SIZE }}>
@@ -452,8 +503,17 @@ const BlockBuster = ({ onExit }) => {
     const keyDown = (e) => { if(e.key === "Right" || e.key === "ArrowRight") rightPressed = true; if(e.key === "Left" || e.key === "ArrowLeft") leftPressed = true; };
     const keyUp = (e) => { if(e.key === "Right" || e.key === "ArrowRight") rightPressed = false; if(e.key === "Left" || e.key === "ArrowLeft") leftPressed = false; };
     
+    // Touch Logic
+    const handleTouchMove = (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const touchX = e.touches[0].clientX - rect.left;
+      paddle.x = touchX - paddle.width / 2;
+    };
+
     window.addEventListener("keydown", keyDown);
     window.addEventListener("keyup", keyUp);
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
 
     const draw = () => {
       canvas.width = canvas.clientWidth;
@@ -520,6 +580,7 @@ const BlockBuster = ({ onExit }) => {
     return () => {
       window.removeEventListener("keydown", keyDown);
       window.removeEventListener("keyup", keyUp);
+      canvas.removeEventListener('touchmove', handleTouchMove);
       cancelAnimationFrame(animationId);
     };
   }, [gameOver]);
@@ -616,6 +677,504 @@ const TicTacToe = ({ onExit }) => {
   );
 };
 
+// --- Game Engine 5: Lane Runner (Used for Cyber Racer) ---
+
+const LaneRunner = ({ onExit }) => {
+  const { recordGameResult } = useGame();
+  const canvasRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    
+    // 3 Lanes: 0 (Left), 1 (Center), 2 (Right)
+    let lane = 1; 
+    let obstacles = [];
+    let frame = 0;
+    
+    const handleInput = (e) => {
+      if (e.key === 'ArrowLeft' && lane > 0) lane--;
+      if (e.key === 'ArrowRight' && lane < 2) lane++;
+    };
+    
+    const handleTouch = (e) => {
+        const width = canvas.clientWidth;
+        if (e.changedTouches[0].clientX < width / 2 && lane > 0) lane--;
+        else if (e.changedTouches[0].clientX > width / 2 && lane < 2) lane++;
+    }
+
+    window.addEventListener('keydown', handleInput);
+    canvas.addEventListener('touchstart', handleTouch);
+
+    const gameLoop = () => {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+      const laneWidth = canvas.width / 3;
+      
+      ctx.fillStyle = '#010101';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw Lanes
+      ctx.strokeStyle = '#e8e3d5';
+      ctx.globalAlpha = 0.2;
+      ctx.beginPath();
+      ctx.moveTo(laneWidth, 0); ctx.lineTo(laneWidth, canvas.height);
+      ctx.moveTo(laneWidth * 2, 0); ctx.lineTo(laneWidth * 2, canvas.height);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // Player
+      const playerX = (lane * laneWidth) + (laneWidth / 2) - 20;
+      ctx.fillStyle = '#a9ddd3';
+      ctx.fillRect(playerX, canvas.height - 80, 40, 60);
+
+      // Obstacles
+      if (frame % 60 === 0) {
+        const obsLane = Math.floor(Math.random() * 3);
+        obstacles.push({ lane: obsLane, y: -50 });
+      }
+
+      ctx.fillStyle = '#e8e3d5'; // Red obstacles in styling but using beige for theme consistency
+      obstacles.forEach((obs, i) => {
+        obs.y += 5 + (score / 500);
+        const obsX = (obs.lane * laneWidth) + (laneWidth / 2) - 20;
+        ctx.fillRect(obsX, obs.y, 40, 40);
+
+        if (obs.y > canvas.height - 80 && obs.y < canvas.height - 20 && obs.lane === lane) {
+          setGameOver(true);
+        }
+
+        if (obs.y > canvas.height) {
+          obstacles.splice(i, 1);
+          setScore(s => s + 10);
+        }
+      });
+
+      if (!gameOver) {
+        frame++;
+        animationId = requestAnimationFrame(gameLoop);
+      }
+    };
+
+    gameLoop();
+    return () => {
+      window.removeEventListener('keydown', handleInput);
+      canvas.removeEventListener('touchstart', handleTouch);
+      cancelAnimationFrame(animationId);
+    };
+  }, [gameOver]);
+
+  return (
+    <div className="relative w-full h-full bg-[#010101] rounded-3xl overflow-hidden border border-[#e8e3d5]/30">
+      <canvas ref={canvasRef} className="w-full h-full block touch-none" />
+      <div className="absolute top-4 left-4 text-[#a9ddd3] font-mono font-bold text-xl">SCORE: {score}</div>
+      {gameOver && <GameOverScreen score={score} onClaim={() => recordGameResult(score, Math.floor(score/10))} />}
+    </div>
+  );
+};
+
+// --- Game Engine 6: Bit Miner (Clicker) ---
+
+const BitMiner = ({ onExit }) => {
+  const { recordGameResult } = useGame();
+  const [nodes, setNodes] = useState([]);
+  const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+  const gameAreaRef = useRef(null);
+
+  useEffect(() => {
+    if (gameOver) return;
+    
+    const spawn = setInterval(() => {
+      const id = Date.now();
+      const x = Math.random() * 80 + 10; // %
+      const y = Math.random() * 80 + 10; // %
+      const type = Math.random() > 0.8 ? 'BAD' : 'GOOD';
+      
+      setNodes(prev => [...prev, { id, x, y, type }]);
+      
+      // Auto remove after time
+      setTimeout(() => {
+        setNodes(prev => {
+            const exists = prev.find(n => n.id === id);
+            if (exists && exists.type === 'GOOD') {
+                // If good node vanished, lose points or game over? let's lose life
+                // For simple arcade, let's just ignore or minor penalty
+            }
+            return prev.filter(n => n.id !== id);
+        });
+      }, 2000); // 2 seconds life
+
+    }, 800); // Spawn rate
+
+    return () => clearInterval(spawn);
+  }, [gameOver]);
+
+  const handleClick = (id, type) => {
+    if (type === 'BAD') {
+      setGameOver(true);
+    } else {
+      setScore(s => s + 50);
+      setNodes(prev => prev.filter(n => n.id !== id));
+    }
+  };
+
+  return (
+    <div ref={gameAreaRef} className="relative w-full h-full bg-[#010101] rounded-3xl overflow-hidden border border-[#e8e3d5]/30">
+      <div className="absolute top-4 left-4 text-[#a9ddd3] font-mono font-bold text-xl z-10">SCORE: {score}</div>
+      
+      {nodes.map(node => (
+        <div 
+            key={node.id}
+            onClick={() => handleClick(node.id, node.type)}
+            className={`absolute w-12 h-12 rounded-full cursor-pointer animate-pulse ${node.type === 'BAD' ? 'bg-red-500 border-2 border-red-300' : 'bg-[#a9ddd3] border-2 border-white'}`}
+            style={{ left: `${node.x}%`, top: `${node.y}%` }}
+        />
+      ))}
+
+      {gameOver && <GameOverScreen score={score} onClaim={() => recordGameResult(score, Math.floor(score/10))} />}
+    </div>
+  );
+}
+
+// --- Game Engine 7: Crypto Flap (Flappy) ---
+
+const CryptoFlap = ({ onExit }) => {
+  const { recordGameResult } = useGame();
+  const canvasRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    let frame = 0;
+    
+    let bird = { x: 50, y: 150, radius: 15, velocity: 0 };
+    let pipes = [];
+    const gravity = 0.5;
+    const jump = -8;
+
+    const handleInput = () => {
+      bird.velocity = jump;
+    };
+
+    window.addEventListener('keydown', handleInput);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(); });
+
+    const gameLoop = () => {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+      
+      // Update Bird
+      bird.velocity += gravity;
+      bird.y += bird.velocity;
+
+      // Gen Pipes
+      if (frame % 100 === 0) {
+        const gap = 150;
+        const topHeight = Math.random() * (canvas.height - gap - 50) + 20;
+        pipes.push({ x: canvas.width, top: topHeight, gap: gap });
+      }
+
+      ctx.fillStyle = '#010101';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw Bird
+      ctx.fillStyle = '#a9ddd3';
+      ctx.beginPath();
+      ctx.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw Pipes
+      ctx.fillStyle = '#e8e3d5';
+      pipes.forEach((p, i) => {
+        p.x -= 3;
+        
+        // Top Pipe
+        ctx.fillRect(p.x, 0, 50, p.top);
+        // Bottom Pipe
+        ctx.fillRect(p.x, p.top + p.gap, 50, canvas.height - (p.top + p.gap));
+
+        // Collision
+        if (
+            (bird.x + bird.radius > p.x && bird.x - bird.radius < p.x + 50) &&
+            (bird.y - bird.radius < p.top || bird.y + bird.radius > p.top + p.gap)
+        ) {
+            setGameOver(true);
+        }
+
+        if (p.x + 50 < 0) {
+            pipes.splice(i, 1);
+            setScore(s => s + 10);
+        }
+      });
+
+      // Floor/Ceiling Collision
+      if (bird.y + bird.radius > canvas.height || bird.y - bird.radius < 0) {
+          setGameOver(true);
+      }
+
+      if (!gameOver) {
+        frame++;
+        animationId = requestAnimationFrame(gameLoop);
+      }
+    };
+
+    gameLoop();
+    return () => {
+      window.removeEventListener('keydown', handleInput);
+      canvas.removeEventListener('touchstart', handleInput);
+      cancelAnimationFrame(animationId);
+    };
+  }, [gameOver]);
+
+  return (
+    <div className="relative w-full h-full bg-[#010101] rounded-3xl overflow-hidden border border-[#e8e3d5]/30">
+      <canvas ref={canvasRef} className="w-full h-full block touch-none" />
+      <div className="absolute top-4 left-4 text-[#a9ddd3] font-mono font-bold text-xl">SCORE: {score}</div>
+      {gameOver && <GameOverScreen score={score} onClaim={() => recordGameResult(score, Math.floor(score/10))} />}
+    </div>
+  );
+};
+
+// --- Game Engine 8: Hex Sweeper (Minesweeper Logic) ---
+
+const HexSweeper = ({ onExit }) => {
+  const { recordGameResult } = useGame();
+  const [grid, setGrid] = useState([]);
+  const [gameOver, setGameOver] = useState(false);
+  const [score, setScore] = useState(0);
+  const SIZE = 5;
+
+  useEffect(() => {
+    // Init Grid
+    const newGrid = [];
+    for (let i = 0; i < SIZE * SIZE; i++) {
+        newGrid.push({ 
+            id: i, 
+            isMine: Math.random() < 0.2, 
+            revealed: false 
+        });
+    }
+    setGrid(newGrid);
+  }, []);
+
+  const handleCellClick = (index) => {
+    if (gameOver || grid[index].revealed) return;
+
+    const newGrid = [...grid];
+    newGrid[index].revealed = true;
+    setGrid(newGrid);
+
+    if (newGrid[index].isMine) {
+        setGameOver(true);
+    } else {
+        setScore(s => s + 20);
+        // Check win (all non-mines revealed)
+        const safeCells = newGrid.filter(c => !c.isMine);
+        const revealedSafe = safeCells.filter(c => c.revealed);
+        if (safeCells.length === revealedSafe.length) {
+            recordGameResult(score + 100, (score + 100) / 10);
+        }
+    }
+  };
+
+  return (
+    <div className="w-full h-full bg-[#010101] flex flex-col items-center justify-center relative">
+       <div className="grid grid-cols-5 gap-2">
+         {grid.map((cell, i) => (
+           <div 
+             key={i} 
+             onClick={() => handleCellClick(i)}
+             className={`w-12 h-12 flex items-center justify-center border border-[#e8e3d5]/20 cursor-pointer transition-all ${
+                 cell.revealed 
+                    ? (cell.isMine ? 'bg-red-500' : 'bg-[#a9ddd3] text-black') 
+                    : 'bg-[#0a0a0a] hover:bg-[#e8e3d5]/10'
+             }`}
+           >
+             {cell.revealed && (cell.isMine ? <Flame size={20}/> : <CheckCircle size={20}/>)}
+           </div>
+         ))}
+       </div>
+       <div className="mt-4 text-[#e8e3d5] font-mono">SAFE ZONES CLEARED: {score / 20}</div>
+       {gameOver && <GameOverScreen score={score} onClaim={() => recordGameResult(score, Math.floor(score/10))} />}
+    </div>
+  );
+};
+
+// --- Game Engine 9: Void Runner (Jump Game) ---
+
+const VoidRunner = ({ onExit }) => {
+  const { recordGameResult } = useGame();
+  const canvasRef = useRef(null);
+  const [score, setScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    let frame = 0;
+    
+    let player = { x: 50, y: 0, width: 30, height: 30, dy: 0, jumping: false };
+    let obstacles = [];
+    const gravity = 0.6;
+    
+    const handleInput = () => {
+      if (!player.jumping) {
+        player.jumping = true;
+        player.dy = -12;
+      }
+    };
+
+    window.addEventListener('keydown', handleInput);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(); });
+
+    const gameLoop = () => {
+      canvas.width = canvas.clientWidth;
+      canvas.height = canvas.clientHeight;
+      const groundLevel = canvas.height - 50;
+
+      // Update Logic
+      if (player.jumping) {
+        player.dy += gravity;
+        player.y += player.dy;
+        if (player.y > groundLevel - player.height) {
+          player.y = groundLevel - player.height;
+          player.jumping = false;
+          player.dy = 0;
+        }
+      } else {
+        player.y = groundLevel - player.height;
+      }
+
+      if (frame % 100 === 0) {
+        obstacles.push({ x: canvas.width, y: groundLevel - 30, width: 30, height: 30 });
+      }
+
+      // Draw
+      ctx.fillStyle = '#010101';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Ground
+      ctx.fillStyle = '#e8e3d5';
+      ctx.fillRect(0, groundLevel, canvas.width, 2);
+
+      // Player
+      ctx.fillStyle = '#a9ddd3';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Obstacles
+      ctx.fillStyle = '#e8e3d5';
+      obstacles.forEach((obs, i) => {
+        obs.x -= 5 + (score / 500);
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        // Collision
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          setGameOver(true);
+        }
+
+        if (obs.x + obs.width < 0) {
+          obstacles.splice(i, 1);
+          setScore(s => s + 10);
+        }
+      });
+
+      if (!gameOver) {
+        frame++;
+        animationId = requestAnimationFrame(gameLoop);
+      }
+    };
+
+    gameLoop();
+    return () => {
+      window.removeEventListener('keydown', handleInput);
+      canvas.removeEventListener('touchstart', handleInput);
+      cancelAnimationFrame(animationId);
+    };
+  }, [gameOver]);
+
+  return (
+    <div className="relative w-full h-full bg-[#010101] rounded-3xl overflow-hidden border border-[#e8e3d5]/30">
+      <canvas ref={canvasRef} className="w-full h-full block touch-none" />
+      <div className="absolute top-4 left-4 text-[#a9ddd3] font-mono font-bold text-xl">SCORE: {score}</div>
+      {gameOver && <GameOverScreen score={score} onClaim={() => recordGameResult(score, Math.floor(score/10))} />}
+    </div>
+  );
+};
+
+// --- Game Engine 10: Neural Link (Memory Game) ---
+
+const NeuralLink = ({ onExit }) => {
+  const { recordGameResult } = useGame();
+  const [cards, setCards] = useState([]);
+  const [flipped, setFlipped] = useState([]);
+  const [solved, setSolved] = useState([]);
+  const [moves, setMoves] = useState(0);
+
+  const ICONS = ['⚡', '💎', '🛡️', '👑', '🔮', '🚀'];
+
+  useEffect(() => {
+    const deck = [...ICONS, ...ICONS]
+      .sort(() => Math.random() - 0.5)
+      .map((icon, id) => ({ id, icon }));
+    setCards(deck);
+  }, []);
+
+  const handleCardClick = (id) => {
+    if (flipped.length === 2 || flipped.includes(id) || solved.includes(id)) return;
+    
+    const newFlipped = [...flipped, id];
+    setFlipped(newFlipped);
+
+    if (newFlipped.length === 2) {
+      setMoves(m => m + 1);
+      const [first, second] = newFlipped;
+      if (cards[first].icon === cards[second].icon) {
+        setSolved([...solved, first, second]);
+        setFlipped([]);
+        if (solved.length + 2 === cards.length) {
+           setTimeout(() => recordGameResult(1000 - (moves * 10), 100), 1000);
+        }
+      } else {
+        setTimeout(() => setFlipped([]), 1000);
+      }
+    }
+  };
+
+  return (
+    <div className="w-full h-full bg-[#010101] flex flex-col items-center justify-center p-4">
+      <div className="grid grid-cols-4 gap-4 w-full max-w-sm">
+        {cards.map((card, i) => (
+          <div 
+            key={i} 
+            onClick={() => handleCardClick(i)}
+            className={`aspect-square flex items-center justify-center text-3xl cursor-pointer rounded border transition-all duration-300 ${
+              flipped.includes(i) || solved.includes(i) 
+                ? 'bg-[#a9ddd3] text-black border-[#a9ddd3]' 
+                : 'bg-[#0a0a0a] border-[#e8e3d5]/30 text-transparent'
+            }`}
+          >
+            {flipped.includes(i) || solved.includes(i) ? card.icon : '?'}
+          </div>
+        ))}
+      </div>
+      <div className="mt-8 text-[#e8e3d5] font-mono">MOVES: {moves}</div>
+    </div>
+  );
+};
+
 // --- Helper Components ---
 
 const GameNotification = () => {
@@ -672,14 +1231,13 @@ const Ticker = () => {
   );
 };
 
-// --- RESTORED VIEW COMPONENTS (With New Palette) ---
+// --- VIEW COMPONENTS ---
 
 const Navbar = () => {
   const { user, connectWallet, disconnectWallet, view, setView } = useGame();
   const [isWalletMenuOpen, setIsWalletMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -721,7 +1279,7 @@ const Navbar = () => {
               className="flex items-center gap-3 border border-[#a9ddd3] px-4 py-2 rounded-full cursor-pointer hover:bg-[#a9ddd3]/10 transition-colors">
               <div className="text-[#e8e3d5] font-mono text-sm">{user.cadeBalance} CADE</div>
               <div className="w-px h-3 bg-[#e8e3d5]/30"></div>
-              <div className="text-gray-500 font-mono text-xs truncate w-20">{user.address}</div>
+              <div className="text-gray-500 font-mono text-xs truncate w-20">{user.address?.slice(0, 6)}...{user.address?.slice(-4)}</div>
             </button>
             
             {isWalletMenuOpen && (
@@ -754,28 +1312,104 @@ const Navbar = () => {
 
 const HeroSection = () => {
     const { launchGame } = useGame(); 
+    const scrollRef = useRef(null);
+    const [isHovered, setIsHovered] = useState(false);
+    
+    // Auto-scroll logic
+    useEffect(() => {
+        if (isHovered) return;
+        const interval = setInterval(() => {
+            if (scrollRef.current) {
+                const maxScroll = scrollRef.current.scrollWidth - scrollRef.current.clientWidth;
+                if (scrollRef.current.scrollLeft >= maxScroll) {
+                    scrollRef.current.scrollLeft = 0; // Loop back
+                } else {
+                    scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+                }
+            }
+        }, 3000); // 3 seconds per slide
+        return () => clearInterval(interval);
+    }, [isHovered]);
+
     return (
-        <div className="relative w-full h-[400px] rounded-sm overflow-hidden mb-12 border border-[#e8e3d5]/10 group">
-            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1555864326-5cf22ef123cf?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-[#010101] via-[#010101]/50 to-transparent"></div>
-            
-            <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full max-w-3xl">
-                <div className="flex items-center gap-2 mb-4">
-                     <span className="bg-[#a9ddd3] text-[#010101] text-xs font-bold px-2 py-0.5 uppercase tracking-widest">Featured</span>
-                     <span className="text-[#e8e3d5] text-xs font-mono uppercase">Jackpot Event</span>
+        <div className="mb-12">
+            {/* Inject styles locally to ensure scrollbar is hidden */}
+            <style>{`
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+            `}</style>
+            <h2 className="text-[#e8e3d5] font-black text-sm uppercase tracking-widest mb-4 flex items-center gap-2"><Flame size={14} className="text-[#a9ddd3]"/> Featured Protocols</h2>
+            <div 
+                ref={scrollRef}
+                className="flex gap-6 overflow-x-auto no-scrollbar pb-4 snap-x"
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
+            >
+                {/* Manual "Featured" Cards */}
+                {GAMES.slice(0, 5).map((game) => (
+                    <div key={game.id} className="min-w-[85vw] md:min-w-[600px] h-[300px] md:h-[400px] rounded-sm overflow-hidden border border-[#e8e3d5]/10 group relative snap-center flex-shrink-0">
+                        <div className={`absolute inset-0 ${game.image} bg-cover bg-center opacity-60 group-hover:scale-105 transition-transform duration-700`}></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#010101] via-[#010101]/50 to-transparent"></div>
+                        <div className="absolute bottom-0 left-0 p-8 w-full">
+                            <h1 className="text-3xl md:text-5xl font-black text-[#e8e3d5] mb-2 tracking-tighter uppercase">{game.name}</h1>
+                            <p className="text-gray-400 text-xs md:text-sm max-w-md mb-6">{game.description}</p>
+                            <button 
+                                onClick={() => launchGame(game.id, game.cost)}
+                                className="bg-[#a9ddd3] text-[#010101] px-6 py-3 font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2">
+                                Initialize <ArrowRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+const ProtocolStats = () => {
+    return (
+        <div className="mt-20 border-t border-[#e8e3d5]/10 pt-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div className="p-6 bg-[#0a0a0a] border border-[#e8e3d5]/10">
+                    <div className="text-[#a9ddd3] mb-4"><Globe size={32}/></div>
+                    <h4 className="text-[#e8e3d5] font-bold uppercase tracking-widest text-sm mb-2">Network Status</h4>
+                    <div className="text-2xl font-mono text-white mb-1">ONLINE</div>
+                    <div className="text-xs text-green-500 font-mono">Latency: 12ms</div>
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-[#e8e3d5] mb-6 tracking-tighter leading-none">
-                    BLOCK BUSTER
-                </h1>
-                <p className="text-gray-400 text-sm md:text-base max-w-lg mb-8 leading-relaxed">
-                    Smash through the firewall blocks to mine CADE tokens. 
-                    Hit the golden node to trigger a 50x multiplier.
-                </p>
-                <button 
-                    onClick={() => launchGame(3, 15)} 
-                    className="bg-[#a9ddd3] text-[#010101] px-8 py-4 font-bold uppercase tracking-widest hover:bg-white transition-colors flex items-center gap-2 shadow-[0_0_20px_rgba(169,221,211,0.3)]">
-                    Play Now <ArrowRight size={18} />
-                </button>
+                <div className="p-6 bg-[#0a0a0a] border border-[#e8e3d5]/10">
+                    <div className="text-[#a9ddd3] mb-4"><Users size={32}/></div>
+                    <h4 className="text-[#e8e3d5] font-bold uppercase tracking-widest text-sm mb-2">Active Nodes</h4>
+                    <div className="text-2xl font-mono text-white mb-1">1,248</div>
+                    <div className="text-xs text-gray-500 font-mono">+12% (24h)</div>
+                </div>
+                <div className="p-6 bg-[#0a0a0a] border border-[#e8e3d5]/10">
+                    <div className="text-[#a9ddd3] mb-4"><Activity size={32}/></div>
+                    <h4 className="text-[#e8e3d5] font-bold uppercase tracking-widest text-sm mb-2">Total Volume</h4>
+                    <div className="text-2xl font-mono text-white mb-1">4.2M</div>
+                    <div className="text-xs text-[#a9ddd3] font-mono">CADE Tokens</div>
+                </div>
+                <div className="p-6 bg-[#0a0a0a] border border-[#e8e3d5]/10">
+                    <div className="text-[#a9ddd3] mb-4"><Server size={32}/></div>
+                    <h4 className="text-[#e8e3d5] font-bold uppercase tracking-widest text-sm mb-2">Treasury</h4>
+                    <div className="text-2xl font-mono text-white mb-1">$842k</div>
+                    <div className="text-xs text-gray-500 font-mono">TVL (Locked)</div>
+                </div>
+            </div>
+            
+            <div className="mt-12 p-8 border border-[#e8e3d5] flex flex-col md:flex-row items-center justify-between gap-8 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-[#050505]">
+                <div>
+                    <h3 className="text-3xl font-black text-[#e8e3d5] uppercase tracking-tighter mb-2">Join The Network</h3>
+                    <p className="text-gray-400 text-sm max-w-md">Participate in the decentralized arcade economy. Earn rewards, trade assets, and govern the future of R-CADE.</p>
+                </div>
+                <div className="flex gap-4">
+                    <button className="px-8 py-4 border border-[#e8e3d5] text-[#e8e3d5] font-bold uppercase tracking-widest hover:bg-[#e8e3d5] hover:text-black transition-all">Read Whitepaper</button>
+                    <button className="px-8 py-4 bg-[#a9ddd3] text-black font-bold uppercase tracking-widest hover:bg-white transition-all">Start Playing</button>
+                </div>
             </div>
         </div>
     )
@@ -827,6 +1461,34 @@ const GameCard = ({ game, onClick }) => (
              </div>
         </div>
     </div>
+);
+
+const FreeGameCard = ({ game }) => (
+  <div className="group bg-[#0a0a0a] border border-[#e8e3d5]/10 hover:border-green-400 transition-all duration-300 relative overflow-hidden h-80 flex flex-col">
+      <div className={`h-48 bg-gradient-to-br ${game.color} relative p-6 flex flex-col justify-end`}>
+           <div className="absolute inset-0 bg-[#010101]/20 group-hover:bg-transparent transition-colors"></div>
+           <Gamepad2 className="text-white/20 absolute top-4 right-4 rotate-12" size={80} />
+           <div className="relative z-10">
+               <span className="text-[10px] font-bold bg-[#010101]/60 backdrop-blur-sm text-green-400 px-2 py-1 rounded mb-2 inline-block border border-green-500/30">FREE TO PLAY</span>
+               <h3 className="text-xl font-black text-white leading-none uppercase tracking-tight">{game.name}</h3>
+           </div>
+      </div>
+      
+      <div className="p-5 bg-[#0a0a0a] flex-1 flex flex-col justify-between">
+          <div>
+              <p className="text-gray-500 text-xs line-clamp-2 mb-2">{game.description}</p>
+              <div className="text-[10px] text-gray-400 font-mono uppercase">Dev: <span className="text-[#e8e3d5]">{game.dev}</span></div>
+          </div>
+          
+          <a 
+            href={game.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full mt-4 bg-[#0a0a0a] hover:bg-green-900/20 border border-green-900/50 hover:border-green-500 text-green-400 py-2 rounded font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+            Launch External <ExternalLink size={12} />
+          </a>
+      </div>
+  </div>
 );
 
 // --- RESTORED (BUT RE-COLORED) LAYOUTS ---
@@ -1214,6 +1876,7 @@ const MainLayout = () => {
                                 <GameCard key={game.id} game={game} onClick={() => launchGame(game.id, game.cost)} />
                             ))}
                         </div>
+                        <ProtocolStats />
                     </>
                 )}
 
@@ -1223,6 +1886,12 @@ const MainLayout = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                             {GAMES.map(game => (
                                 <GameCard key={game.id} game={game} onClick={() => launchGame(game.id, game.cost)} />
+                            ))}
+                        </div>
+                        <h2 className="text-3xl font-black text-[#e8e3d5] mb-8 uppercase tracking-tighter border-t border-[#e8e3d5]/10 pt-12">Indie Arcade (Free)</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                            {FREE_GAMES.map(game => (
+                                <FreeGameCard key={game.id} game={game} />
                             ))}
                         </div>
                         <HallOfFame />
@@ -1239,6 +1908,12 @@ const MainLayout = () => {
                          activeGameId === 2 ? <SnakeGame /> :
                          activeGameId === 3 ? <BlockBuster /> :
                          activeGameId === 4 ? <TicTacToe /> :
+                         activeGameId === 5 ? <LaneRunner /> :
+                         activeGameId === 6 ? <BitMiner /> :
+                         activeGameId === 7 ? <CryptoFlap /> :
+                         activeGameId === 8 ? <HexSweeper /> :
+                         activeGameId === 9 ? <VoidRunner /> :
+                         activeGameId === 10 ? <NeuralLink /> :
                          <div className="h-full flex items-center justify-center text-gray-500 font-mono">MODULE NOT LOADED</div>}
                     </div>
                 )}
